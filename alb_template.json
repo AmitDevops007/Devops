@@ -29,9 +29,9 @@
             {
               "Effect": "Allow",
               "Principal": {
-                "Service": ["cloudformation.amazonaws.com"]
+                "Service": "cloudformation.amazonaws.com"
               },
-              "Action": ["sts:AssumeRole"]
+              "Action": "sts:AssumeRole"
             }
           ]
         },
@@ -87,7 +87,7 @@
       "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
       "Properties": {
         "Name": "amit-alb",
-        "Subnets": { "Ref": "SubnetIds" },
+        "Subnets": { "Fn::Split": [ ",", { "Ref": "SubnetIds" } ] },
         "SecurityGroups": [ { "Ref": "ALBSecurityGroup" } ],
         "Scheme": "internet-facing",
         "Type": "application",
