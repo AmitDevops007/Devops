@@ -20,42 +20,6 @@
     }
   },
   "Resources": {
-    "CloudFormationRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "cloudformation.amazonaws.com"
-              },
-              "Action": "sts:AssumeRole"
-            }
-          ]
-        },
-        "Policies": [
-          {
-            "PolicyName": "CloudFormationPolicy",
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "ec2:*",
-                    "elasticloadbalancing:*",
-                    "iam:PassRole"
-                  ],
-                  "Resource": "*"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
     "ALBSecurityGroup": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
@@ -85,10 +49,11 @@
     },
     "ApplicationLoadBalancer": {
       "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "DependsOn": "ALBSecurityGroup",
       "Properties": {
-        "Name": "amit-alb",
-        "Subnets": { "Fn::Split": [ ",", { "Ref": "SubnetIds" } ] },
-        "SecurityGroups": [ { "Ref": "ALBSecurityGroup" } ],
+        "Name": "amitalb",
+        "Subnets": { "Fn::Split": [",", { "Ref": "SubnetIds" }] },
+        "SecurityGroups": [{ "Ref": "ALBSecurityGroup" }],
         "Scheme": "internet-facing",
         "Type": "application",
         "Tags": [
@@ -98,62 +63,12 @@
           }
         ]
       }
-    },
-    "TargetGroup": {
-      "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
-      "Properties": {
-        "VpcId": { "Ref": "VpcId" },
-        "Protocol": "HTTP",
-        "Port": 80,
-        "TargetType": "instance",
-        "HealthCheckPath": "/health",
-        "Matcher": { "HttpCode": "200" },
-        "Tags": [
-          {
-            "Key": "Environment",
-            "Value": { "Ref": "EnvironmentName" }
-          }
-        ]
-      }
-    },
-    "ALBListener": {
-      "Type": "AWS::ElasticLoadBalancingV2::Listener",
-      "Properties": {
-        "LoadBalancerArn": { "Ref": "ApplicationLoadBalancer" },
-        "Protocol": "HTTP",
-        "Port": 80,
-        "DefaultActions": [
-          {
-            "Type": "forward",
-            "TargetGroupArn": { "Ref": "TargetGroup" }
-          }
-        ]
-      }
-    },
-    "ListenerRulePath": {
-      "Type": "AWS::ElasticLoadBalancingV2::ListenerRule",
-      "Properties": {
-        "ListenerArn": { "Ref": "ALBListener" },
-        "Priority": 1,
-        "Conditions": [
-          {
-            "Field": "path-pattern",
-            "Values": [ "/products/*" ]
-          }
-        ],
-        "Actions": [
-          {
-            "Type": "forward",
-            "TargetGroupArn": { "Ref": "TargetGroup" }
-          }
-        ]
-      }
     }
   },
   "Outputs": {
     "LoadBalancerDNS": {
       "Description": "DNS Name of the ALB",
-      "Value": { "Fn::GetAtt": [ "ApplicationLoadBalancer", "DNSName" ] }
+      "Value": { "Fn::GetAtt": ["ApplicationLoadBalancer", "DNSName"] }
     }
   }
 }
